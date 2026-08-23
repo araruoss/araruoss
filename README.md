@@ -100,7 +100,7 @@ If you discover a security vulnerability, follow the project's private reporting
 
 <p align="center">
   <br>
-  <img src="../assets/araru-logo.png" width="260" alt="Araru OSS">
+  <img src="./assets/araru-logo.png" width="260" alt="Araru OSS">
   <br><br>
   <em>Read. Organize. Preserve.</em>
 </p>
