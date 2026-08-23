@@ -1,67 +1,66 @@
 <p align="center">
-  <img src="../assets/araru-banner.png" width="100%" alt="Araru — seu acervo digital sob seu controle">
+  <img src="./assets/araru-banner.png" width="100%" alt="Araru — your digital collection, under your control">
+</p>
+<p align="center">
+  <strong>Your digital collection, under your control.</strong>
 </p>
 
 <p align="center">
-  <strong>Seu acervo digital, sob seu controle.</strong>
+  Open source · Self-hosted · Privacy by design · Made in Brazil 🇧🇷
 </p>
 
 <p align="center">
-  Open source · Self-hosted · Privacidade por design · Feito no Brasil 🇧🇷
-</p>
-
-<p align="center">
-  <a href="https://github.com/Araru-OSS/araru">Conheça o projeto</a>
+  <a href="https://github.com/Araru-OSS/araru">Explore the project</a>
   ·
-  <a href="https://github.com/Araru-OSS/araru/tree/main/docs">Documentação</a>
+  <a href="https://github.com/Araru-OSS/araru/tree/main/docs">Documentation</a>
   ·
-  <a href="https://github.com/Araru-OSS/araru/blob/main/CONTRIBUTING.md">Contribua</a>
+  <a href="https://github.com/Araru-OSS/araru/blob/main/CONTRIBUTING.md">Contribute</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-em%20desenvolvimento-2d8a4e?style=flat-square" alt="Status: em desenvolvimento">
-  <img src="https://img.shields.io/badge/Node.js-%3E%3D22.5-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 22.5 ou superior">
-  <img src="https://img.shields.io/badge/React-Vite-61DAFB?style=flat-square&logo=react&logoColor=20232a" alt="React e Vite">
+  <img src="https://img.shields.io/badge/status-in%20active%20development-2d8a4e?style=flat-square" alt="Status: in active development">
+  <img src="https://img.shields.io/badge/Node.js-%3E%3D22.5-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 22.5 or newer">
+  <img src="https://img.shields.io/badge/React-Vite-61DAFB?style=flat-square&logo=react&logoColor=20232a" alt="React and Vite">
   <img src="https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker ready">
 </p>
 
 ---
 
-## 📚 O que é o Araru?
+## 📚 What is Araru?
 
-O **Araru** é um servidor de biblioteca digital open source e self-hosted para organizar, pesquisar, preservar e ler o seu próprio acervo.
+**Araru** is an open-source, self-hosted digital library server for organizing, searching, preserving, and reading your own collection.
 
-Você mantém o controle dos seus arquivos, metadados, histórico de leitura e infraestrutura — com uma experiência web responsiva para desktop, tablet e celular.
+You keep control of your files, metadata, reading history, and infrastructure — with a responsive web experience for desktop, tablet, and mobile.
 
-> **Sua biblioteca. Seu servidor. Seus dados.**
+> **Your library. Your server. Your data.**
 
-### Feito para acervos de verdade
+### Built for real collections
 
-- 📖 Livros e ebooks
-- 💬 HQs e mangás
-- 📰 Revistas
-- 📄 Documentos
+- 📖 Books and ebooks
+- 💬 Comics and manga
+- 📰 Magazines
+- 📄 Documents
 
-## ✨ Recursos atuais
+## ✨ Current features
 
-- Catálogo local com integração opcional ao Google Drive
-- Categorias hierárquicas baseadas em pastas
-- Pesquisa full-text, filtros, favoritos e séries
-- Metadados, capas, revisão e identificação de duplicidades
-- Progresso de leitura, continuar de onde parou e estatísticas
-- Leitores internos para **PDF, EPUB, MOBI, CBZ e CBR**
-- PWA e download offline explícito
-- Backup, verificação de integridade e jobs operacionais
-- Arquitetura preparada para múltiplos clientes
+- Local catalog with optional Google Drive integration
+- Folder-based hierarchical categories
+- Full-text search, filters, favorites, and series
+- Metadata, covers, review tools, and duplicate detection
+- Reading progress, continue where you left off, and statistics
+- Built-in readers for **PDF, EPUB, MOBI, CBZ, and CBR**
+- PWA support and explicit offline downloads
+- Backups, integrity checks, and operational jobs
+- Architecture ready for multiple clients
 
-## 🧩 Como funciona
+## 🧩 How it works
 
-O Araru separa o servidor — responsável pela biblioteca e pelos dados — dos clientes que oferecem a experiência de uso:
+Araru separates the server — responsible for the library and its data — from the clients that provide the user experience:
 
 ```text
                          ┌────────────────────┐
                          │    Araru Server    │
-                         │ API · Auth · Dados │
+                         │ API · Auth · Data  │
                          │ Storage · Metadata │
                          └──────────┬─────────┘
                                     │ HTTP
@@ -72,36 +71,36 @@ O Araru separa o servidor — responsável pela biblioteca e pelos dados — dos
                          └────────────────────┘
 ```
 
-O servidor conversa com PostgreSQL, Redis, filesystem/cache e provedores opcionais de armazenamento. Clientes não acessam diretamente o banco ou o storage.
+The server communicates with PostgreSQL, Redis, the filesystem/cache, and optional storage providers. Clients never access the database or storage directly.
 
 ## 🛠️ Stack
 
 `Node.js` · `Express` · `React` · `Vite` · `PWA` · `PostgreSQL` · `Redis` · `Docker`
 
-## 🚧 Status do projeto
+## 🚧 Project status
 
-O Araru está em **desenvolvimento ativo**. A base atual já contempla o servidor e o cliente web; APIs, funcionalidades e arquitetura ainda podem evoluir antes de uma primeira versão estável.
+Araru is in **active development**. The current foundation includes the server and web client; APIs, features, and architecture may continue to evolve before the first stable release.
 
-Entre as próximas direções estão clientes mobile e desktop, audiobooks, API versionada, expansão de multiusuário e evolução da camada de storage. Consulte o [roadmap](https://github.com/Araru-OSS/araru/tree/main/docs/roadmap) para acompanhar o que está sendo considerado.
+Upcoming directions include mobile and desktop clients, audiobooks, a versioned API, expanded multi-user support, and continued evolution of the storage layer. See the [roadmap](https://github.com/Araru-OSS/araru/tree/main/docs/roadmap) to follow what is being considered.
 
-## 🤝 Construído em público
+## 🤝 Built in public
 
-Contribuições são bem-vindas — código, testes, documentação, acessibilidade, UX, traduções e boas ideias. Antes de abrir uma issue ou pull request, leia as [orientações para contribuição](https://github.com/Araru-OSS/araru/blob/main/CONTRIBUTING.md).
+Contributions are welcome — code, testing, documentation, accessibility, UX, translations, and good ideas. Before opening an issue or pull request, please read the [contribution guidelines](https://github.com/Araru-OSS/araru/blob/main/CONTRIBUTING.md).
 
-Se você encontrar uma vulnerabilidade de segurança, siga as instruções privadas do projeto em vez de abrir uma issue pública.
+If you discover a security vulnerability, follow the project's private reporting instructions instead of opening a public issue.
 
 ## 🔗 Links
 
-- [Repositório do Araru](https://github.com/Araru-OSS/araru)
-- [Documentação técnica](https://github.com/Araru-OSS/araru/tree/main/docs)
-- [Arquitetura](https://github.com/Araru-OSS/araru/blob/main/docs/architecture/overview.md)
-- [Guia de início](https://github.com/Araru-OSS/araru/tree/main/docs/getting-started)
+- [Araru repository](https://github.com/Araru-OSS/araru)
+- [Technical documentation](https://github.com/Araru-OSS/araru/tree/main/docs)
+- [Architecture](https://github.com/Araru-OSS/araru/blob/main/docs/architecture/overview.md)
+- [Getting started guide](https://github.com/Araru-OSS/araru/tree/main/docs/getting-started)
 - [Roadmap](https://github.com/Araru-OSS/araru/tree/main/docs/roadmap)
-- [Organização Araru OSS](https://github.com/Araru-OSS)
+- [Araru OSS organization](https://github.com/Araru-OSS)
 
 <p align="center">
   <br>
   <img src="../assets/araru-logo.png" width="260" alt="Araru OSS">
   <br><br>
-  <em>Leia. Organize. Preserve.</em>
+  <em>Read. Organize. Preserve.</em>
 </p>
