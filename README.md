@@ -83,6 +83,16 @@ Araru is in **active development**. The current foundation includes the server a
 
 Upcoming directions include mobile and desktop clients, audiobooks, a versioned API, expanded multi-user support, and continued evolution of the storage layer. See the [roadmap](https://github.com/Araru-OSS/araru/tree/main/docs/roadmap) to follow what is being considered.
 
+## 🏷️ Versioning and releases
+
+Each distributable component follows [Semantic Versioning](https://semver.org/) with an independent release cycle. Araru Server, Web, and Docs therefore do not need matching version numbers. Releases are derived from Conventional Commits and published through automated release pull requests.
+
+- `fix:` produces a patch release;
+- `feat:` produces a minor release;
+- `!` or `BREAKING CHANGE:` produces a major release.
+
+Runtime deployments should pin exact Server and Web versions. Android and Desktop remain unversioned while their repositories are reserved and will begin at `0.1.0` when implementation starts.
+
 ## 🤝 Built in public
 
 Contributions are welcome — code, testing, documentation, accessibility, UX, translations, and good ideas. Before opening an issue or pull request, please read the [contribution guidelines](https://github.com/Araru-OSS/araru/blob/main/CONTRIBUTING.md).
