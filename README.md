@@ -91,7 +91,7 @@ Each distributable component follows [Semantic Versioning](https://semver.org/) 
 - `feat:` produces a minor release;
 - `!` or `BREAKING CHANGE:` produces a major release.
 
-Runtime deployments should pin exact Server and Web versions. Android and Desktop remain unversioned while their repositories are reserved and will begin at `0.1.0` when implementation starts.
+Runtime deployments should pin exact Server and Web versions. Every product repository uses `0.1.0` as its initial baseline, including the reserved Android and Desktop clients.
 
 ## 🤝 Built in public
 
