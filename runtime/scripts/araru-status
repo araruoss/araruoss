@@ -1,0 +1,28 @@
+#!/bin/sh
+set -eu
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ARARU_RUNTIME_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+. "$SCRIPT_DIR/araru-lib"
+repo_filter="${1:-}"
+repos=$(ruby -e 'require "yaml"; puts YAML.load_file(ARGV[0])["repositories"].keys' "$ARARU_CONFIG")
+for repo in $repos; do
+  [ -z "$repo_filter" ] || [ "$repo" = "$repo_filter" ] || continue
+  path=$(repository_path "$repo")
+  printf '%s\n' "$repo"
+  if [ ! -d "$path/.git" ]; then printf '  Status: not cloned\n'; continue; fi
+  branch=$(git -C "$path" branch --show-current)
+  [ -n "$(git -C "$path" status --porcelain)" ] && state=changed || state=clean
+  state_file="$ARARU_RUNTIME_ROOT/.state/$repo.json"
+  printf '  Branch: %s\n  Working tree: %s\n' "${branch:-detached}" "$state"
+  if validation_error=$(validate_repository "$repo" 2>&1); then
+    printf '  Repository validation: passed\n'
+  else
+    printf '  Repository validation: failed (%s)\n' "$(printf '%s' "$validation_error" | sed 's/^ *//')"
+  fi
+  if [ -f "$state_file" ]; then
+    ruby -rjson -e 's=JSON.parse(File.read(ARGV[0])); puts "  Issue: ##{s["issue"] || "not created"}"; puts "  PR: ##{s["pullRequest"] || "not created"}"; puts "  Workflow: #{s["status"] || "unknown"}"' "$state_file"
+  else
+    printf '  Workflow: no local state\n'
+  fi
+  command -v gh >/dev/null 2>&1 && printf '  GitHub: available\n' || printf '  GitHub: gh unavailable\n'
+done

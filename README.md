@@ -91,6 +91,15 @@ Each distributable component follows [Semantic Versioning](https://semver.org/) 
 - `feat:` produces a minor release;
 - `!` or `BREAKING CHANGE:` produces a major release.
 
+## 🧰 Development Runtime
+
+The central repository includes a portable development runtime for coordinating contributions across the Araru ecosystem. It discovers repositories, validates Git remotes, guides the Issue-first workflow, and documents Conventional Commits, pull requests, CI, releases, and deploys.
+
+- [Runtime setup and commands](runtime/README.md)
+- [Actions and release audit](runtime/ACTIONS.md)
+- [Agent instructions](runtime/AGENTS.md)
+- [Development workflow skill](runtime/skills/araru-development-workflow/SKILL.md)
+
 Runtime deployments should pin exact Server and Web versions. Every product repository uses `0.1.0` as its initial baseline, including the reserved Android and Desktop clients.
 
 ## 🤝 Built in public
