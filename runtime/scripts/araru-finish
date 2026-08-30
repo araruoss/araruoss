@@ -1,0 +1,71 @@
+#!/bin/sh
+set -eu
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ARARU_RUNTIME_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+. "$SCRIPT_DIR/araru-lib"
+repo="${1:-}"; continue_work=false; dry_run=false; yes=false; message=''
+[ -n "$repo" ] || { echo 'Usage: araru-finish <repository> [--continue] [--dry-run]' >&2; exit 2; }
+shift || true
+while [ "$#" -gt 0 ]; do case "$1" in --continue) continue_work=true ;; --dry-run) dry_run=true ;; --yes) yes=true ;; --message) message="${2:?--message requires a value}"; shift ;; *) echo "Unknown option: $1" >&2; exit 2 ;; esac; shift; done
+state_file="$ARARU_RUNTIME_ROOT/.state/$repo.json"
+[ "$dry_run" = true ] || [ -f "$state_file" ] || { echo "State not found: $state_file" >&2; exit 1; }
+state_value() { ruby -rjson -e 's=JSON.parse(File.read(ARGV[0])); puts(s[ARGV[1]] || "")' "$state_file" "$1"; }
+path=$(repository_path "$repo")
+validate_repository "$repo"
+if $dry_run; then
+  branch=$(git -C "$path" branch --show-current)
+  printf 'Repository: %s\nBase: configured\nCurrent branch: %s\nValidation: configured\nCommit/PR/CI: would continue after confirmation\nNo Git or GitHub state was changed.\n' "$repo" "${branch:-detached}"
+  exit 0
+fi
+branch=$(state_value branch); issue=$(state_value issue); pr=$(state_value pullRequest)
+[ -d "$path/.git" ] || { echo 'Repository is not available.' >&2; exit 1; }
+[ "$(git -C "$path" branch --show-current)" = "$branch" ] || { echo "Current branch does not match state: $branch" >&2; exit 1; }
+if $continue_work; then
+  command -v gh >/dev/null 2>&1 || { echo 'GitHub CLI is required.' >&2; exit 1; }
+  [ -n "$pr" ] || { echo 'PR not found in state.' >&2; exit 1; }
+  github_repo=$(github_repository "$repo")
+  gh pr view "$pr" --repo "$github_repo" --json state,mergedAt --jq '.state + " " + (.mergedAt // "")'
+  echo 'Release/deploy remains a gate; the Issue was not closed automatically.'
+  exit 0
+fi
+"$ARARU_RUNTIME_ROOT/scripts/araru-validate" "$repo"
+git -C "$path" status --short
+git -C "$path" diff --stat
+git -C "$path" diff --staged --stat
+[ -n "$(git -C "$path" status --porcelain)" ] || { echo 'No changes to commit.' >&2; exit 1; }
+scope=$(printf '%s' "$repo" | sed 's/^araru-//;s/\.github\.io$/docs/')
+[ -n "$message" ] || message="refactor($scope): update $scope"
+if ! $yes; then
+  printf 'Suggested message: %s\nCreate commit, push, and PR? [y/N] ' "$message"
+  IFS= read -r answer
+  [ "$answer" = y ] || [ "$answer" = Y ] || { echo 'Operation cancelled; no remote changes were made.'; exit 0; }
+fi
+[ -n "$(git -C "$path" diff --cached --name-only)" ] || { echo 'No staged changes. Review the diff and stage only files related to the Issue.' >&2; exit 1; }
+git -C "$path" commit -m "$message" -m "Refs #$issue"
+git -C "$path" push -u origin "$branch"
+command -v gh >/dev/null 2>&1 || { echo 'Commit and push completed; gh is not available to create the PR.' >&2; exit 1; }
+github_repo=$(github_repository "$repo")
+body=$(mktemp); trap 'rm -f "$body"' EXIT
+cat > "$body" <<EOF
+## Summary
+
+$message
+
+## Issue
+
+Refs #$issue
+
+## Validation
+
+- [x] Local validation
+- [ ] GitHub Actions
+- [ ] Release/deploy
+
+## Release impact
+
+Review according to the repository's release-please policy.
+EOF
+pr_url=$(gh pr create --repo "$github_repo" --base "$(yaml_value "$repo" base_branch)" --head "$branch" --title "$message" --body-file "$body")
+pr=$(printf '%s' "$pr_url" | sed 's:/*$::;s:.*/::')
+ruby -rjson -e 'p=ARGV[0]; s=JSON.parse(File.read(p)); s["pullRequest"]=ARGV[1].to_i; s["status"]="waiting-ci"; File.write(p, JSON.pretty_generate(s)+"\n")' "$state_file" "$pr"
+printf 'PR #%s created; status waiting-ci saved. Automatic merge was not executed.\n' "$pr"

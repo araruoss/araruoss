@@ -1,0 +1,61 @@
+#!/bin/sh
+set -eu
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ARARU_RUNTIME_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+. "$SCRIPT_DIR/araru-lib"
+repo="${1:-}"; dry_run=false; type=refactor; title=''; slug=''; issue=''; confirm=false
+shift || true
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --dry-run) dry_run=true ;; --type) type="${2:?--type requires a value}"; shift ;; --title) title="${2:?--title requires a value}"; shift ;; --slug) slug="${2:?--slug requires a value}"; shift ;; --issue) issue="${2:?--issue requires a value}"; shift ;; --yes) confirm=true ;; *) echo "Unknown option: $1" >&2; exit 2 ;; esac
+  shift
+done
+[ -n "$repo" ] || { echo 'Usage: araru-start <repository> [--dry-run] [--type type] [--title description] [--slug slug]' >&2; exit 2; }
+path=$(repository_path "$repo"); base=$(yaml_value "$repo" base_branch); remote_name=$(yaml_value "$repo" remote 2>/dev/null || echo origin)
+validate_repository "$repo"
+branch=$(git -C "$path" branch --show-current); remote=$(git -C "$path" remote get-url "$remote_name" 2>/dev/null || true); dirty=$(git -C "$path" status --porcelain)
+printf 'Repository: %s\nBase branch: %s\nCurrent branch: %s\nRemote: %s\n' "$repo" "$base" "${branch:-detached}" "${remote:-not configured}"
+[ -n "$dirty" ] && printf 'Working tree: dirty\n' || printf 'Working tree: clean\n'
+if $dry_run; then
+  printf 'Issue: would create with title "%s: %s"\nBranch: would create %s/<issue>-%s\nValidation: configured\nPR: required, no auto-merge\nCI: configured gate\nRelease/deploy: configured gate\nIssue close: after final gate\nNo Git or GitHub state was changed.\n' "$type" "${title:-<description>}" "$type" "${slug:-<slug>}"
+  exit 0
+fi
+[ -z "$dirty" ] || { echo 'Workflow stopped: the working tree contains local changes.' >&2; exit 1; }
+command -v gh >/dev/null 2>&1 || { echo 'GitHub CLI (gh) is required to create the Issue.' >&2; exit 1; }
+gh auth status >/dev/null 2>&1 || { echo 'GitHub CLI is not authenticated.' >&2; exit 1; }
+[ "$branch" = "$base" ] || git -C "$path" switch "$base"
+git -C "$path" pull --ff-only "$remote_name" "$base"
+[ -n "$title" ] || { printf 'Issue description: '; IFS= read -r title; }
+[ -n "$slug" ] || slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//')
+body=$(mktemp); trap 'rm -f "$body"' EXIT
+cat > "$body" <<EOF
+## Context
+$title
+
+## Objective
+Implement the requested change in $repo.
+
+## Scope
+- Implement the approved change.
+
+## Acceptance criteria
+- [ ] Local validation passes
+- [ ] Pull request and CI pass
+- [ ] Release/deploy gates are complete when applicable
+
+## Validation
+- [ ] local validation
+- [ ] pull request
+- [ ] GitHub Actions
+- [ ] release/deploy
+EOF
+github_repo=$(github_repository "$repo")
+issue_url=$(gh issue create --repo "$github_repo" --title "$type: $title" --body-file "$body")
+issue=$(printf '%s' "$issue_url" | sed 's:/*$::;s:.*/::')
+suggested="$type/$issue-$slug"
+printf 'Issue: #%s\nSuggested branch: %s\nUse this branch? [Y/n] ' "$issue" "$suggested"
+if ! $confirm; then IFS= read -r answer; [ -z "$answer" ] || [ "$answer" = y ] || [ "$answer" = Y ] || { echo 'Branch creation cancelled.'; exit 1; }; fi
+git -C "$path" switch -c "$suggested"
+mkdir -p "$ARARU_RUNTIME_ROOT/.state"
+ruby -rjson -e 'File.write(ARGV[0], JSON.pretty_generate({repository: ARGV[1], issue: ARGV[2].to_i, issueUrl: ARGV[3], branch: ARGV[4], baseBranch: ARGV[5], pullRequest: nil, status: "development"}) + "\n")' "$ARARU_RUNTIME_ROOT/.state/$repo.json" "$repo" "$issue" "$issue_url" "$suggested" "$base"
+echo "Branch created and state saved in .state/$repo.json"

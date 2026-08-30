@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ARARU_RUNTIME_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+. "$SCRIPT_DIR/araru-lib"
+repo="${1:-}"
+[ -n "$repo" ] || { echo "Usage: araru-validate <repository>" >&2; exit 2; }
+path=$(repository_path "$repo")
+validate_repository "$repo"
+echo "Araru $repo"
+commands_file=$(mktemp)
+trap 'rm -f "$commands_file"' EXIT
+ruby -e 'require "yaml"; puts YAML.load_file(ARGV[0])["repositories"][ARGV[1]]["validation"].values' "$ARARU_CONFIG" "$repo" > "$commands_file"
+[ -s "$commands_file" ] || { echo 'No validations configured.'; exit 0; }
+cd "$path"
+while IFS= read -r command; do
+  [ -n "$command" ] || continue
+  printf '→ %s\n' "$command"
+  sh -c "$command" || { printf '✗ %s\nValidation failed.\n' "$command"; exit 1; }
+  printf '✓ %s\n' "$command"
+done < "$commands_file"
+echo 'Validation passed.'

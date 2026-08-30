@@ -1,0 +1,74 @@
+repositories:
+  araru-server:
+    path: araru-server
+    remote: origin
+    base_branch: main
+    github: {owner: araruoss, repository: araru-server}
+    validation: {lint: 'npm run lint', tests: 'npm test', build: 'npm run build'}
+    pull_request: {required: true, auto_merge: false}
+    ci: {required: true, wait: true}
+    release: {required: true, provider: release-please, validate: {workflow: true, tag: true, github_release: true}}
+    deploy: {required: true, provider: docker-image, image: ghcr.io/araruoss/araru-server}
+    issue_close: {gate: deploy}
+  araru-web:
+    path: araru-web
+    remote: origin
+    base_branch: main
+    github: {owner: araruoss, repository: araru-web}
+    validation: {lint: 'npm run lint', typecheck: 'npm run typecheck', tests: 'npm test', build: 'npm run build'}
+    pull_request: {required: true, auto_merge: false}
+    ci: {required: true, wait: true}
+    release: {required: true, provider: release-please, validate: {workflow: true, tag: true, github_release: true}}
+    deploy: {required: true, provider: docker-image, image: ghcr.io/araruoss/araru-web}
+    issue_close: {gate: deploy}
+  araru-android:
+    path: araru-android
+    base_branch: main
+    github: {owner: araruoss, repository: araru-android}
+    validation: {}
+    pull_request: {required: true, auto_merge: false}
+    ci: {required: false, wait: false}
+    release: {required: true, provider: release-please, validate: {workflow: true, tag: true, github_release: true}}
+    deploy: {required: false, provider: none}
+    issue_close: {gate: release}
+  araru-desktop:
+    path: araru-desktop
+    base_branch: main
+    github: {owner: araruoss, repository: araru-desktop}
+    validation: {}
+    pull_request: {required: true, auto_merge: false}
+    ci: {required: false, wait: false}
+    release: {required: true, provider: release-please, validate: {workflow: true, tag: true, github_release: true}}
+    deploy: {required: false, provider: none}
+    issue_close: {gate: release}
+  araru-design:
+    path: araru-design
+    base_branch: main
+    github: {owner: araruoss, repository: araru-design}
+    validation: {}
+    pull_request: {required: true, auto_merge: false}
+    ci: {required: true, wait: true}
+    release: {required: false, provider: none}
+    deploy: {required: false, provider: none}
+    issue_close: {gate: ci}
+  araruoss:
+    path: .
+    base_branch: main
+    remote: origin
+    github: {owner: araruoss, repository: araruoss}
+    validation: {}
+    pull_request: {required: true, auto_merge: false}
+    ci: {required: true, wait: true}
+    release: {required: false, provider: none}
+    deploy: {required: false, provider: none}
+    issue_close: {gate: ci}
+  araruoss.github.io:
+    path: araruoss.github.io
+    base_branch: main
+    github: {owner: araruoss, repository: araruoss.github.io}
+    validation: {check: 'npm run check', build: 'npm run build'}
+    pull_request: {required: true, auto_merge: false}
+    ci: {required: true, wait: true}
+    release: {required: true, provider: release-please, validate: {workflow: true, tag: true, github_release: true}}
+    deploy: {required: true, provider: github-pages}
+    issue_close: {gate: deploy}

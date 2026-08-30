@@ -1,0 +1,69 @@
+#!/bin/sh
+
+set -eu
+
+ARARU_RUNTIME_ROOT=${ARARU_RUNTIME_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)}
+ARARU_CONFIG=${ARARU_CONFIG:-$ARARU_RUNTIME_ROOT/config/repositories.yaml}
+ARARU_CENTRAL_ROOT=$(CDPATH= cd -- "$ARARU_RUNTIME_ROOT/.." && pwd)
+
+yaml_value() {
+  ruby -e 'require "yaml"; value=YAML.load_file(ARGV[0])["repositories"][ARGV[1]]; abort "Repository is not configured: #{ARGV[1]}" unless value; ARGV[2].split(".").each { |key| value=value[key] if value }; abort "Configuration is missing: #{ARGV[2]}" if value.nil?; puts(value.is_a?(Hash) ? "" : value.to_s)' "$ARARU_CONFIG" "$1" "$2"
+}
+
+workspace_root() {
+  if [ -n "${ARARU_WORKSPACE_ROOT:-}" ]; then
+    CDPATH= cd -- "$ARARU_WORKSPACE_ROOT" && pwd
+    return
+  fi
+  printf '%s\n' "$(CDPATH= cd -- "$ARARU_CENTRAL_ROOT/.." && pwd)"
+}
+
+repository_path() {
+  repository="$1"
+  configured_path=$(yaml_value "$repository" path)
+  root=$(workspace_root)
+  if [ "$repository" = "araruoss" ] && [ "$configured_path" = "." ]; then
+    printf '%s\n' "$ARARU_CENTRAL_ROOT"
+    return
+  fi
+  for candidate in "$root/$configured_path" "$ARARU_CENTRAL_ROOT/$configured_path"; do
+    if [ -d "$candidate" ]; then
+      CDPATH= cd -- "$candidate" && pwd
+      return
+    fi
+  done
+  printf '%s\n' "$root/$configured_path"
+}
+
+github_repository() {
+  owner=$(yaml_value "$1" github.owner)
+  name=$(yaml_value "$1" github.repository)
+  printf '%s/%s\n' "$owner" "$name"
+}
+
+normalize_remote() {
+  remote_url=${1%.git}
+  case "$remote_url" in
+    git@github.com:*) printf '%s\n' "${remote_url#git@github.com:}" ;;
+    git@*:*) printf '%s\n' "${remote_url#*:}" ;;
+    https://github.com/*) printf '%s\n' "${remote_url#https://github.com/}" ;;
+    http://github.com/*) printf '%s\n' "${remote_url#http://github.com/}" ;;
+    *) printf '%s\n' "$remote_url" ;;
+  esac
+}
+
+validate_repository() {
+  repository="$1"
+  path=$(repository_path "$repository")
+  [ -d "$path" ] || { echo "Repository is not cloned: $repository ($path)" >&2; return 1; }
+  [ -d "$path/.git" ] || { echo "Repository has no .git directory: $path" >&2; return 1; }
+  remote_name=$(yaml_value "$repository" remote 2>/dev/null || printf '%s' origin)
+  actual_remote=$(git -C "$path" remote get-url "$remote_name" 2>/dev/null || true)
+  [ -n "$actual_remote" ] || { echo "Expected remote '$remote_name' is missing: $path" >&2; return 1; }
+  expected_remote=$(normalize_remote "$(github_repository "$repository")")
+  normalized_remote=$(normalize_remote "$actual_remote")
+  [ "$normalized_remote" = "$expected_remote" ] || {
+    echo "Remote mismatch for $repository: expected $expected_remote, found $normalized_remote" >&2
+    return 1
+  }
+}
